@@ -1,0 +1,18 @@
+certifi==2026.5.20
+charset-normalizer==3.4.7
+codewars_test @ git+https://github.com/codewars/python-test-framework.git@3e2ceebd6e6eda7b5058792d1d23a48be8eefa6a
+execnet==2.1.2
+idna==3.18
+iniconfig==2.3.0
+Jinja2==3.1.6
+MarkupSafe==3.0.3
+packaging==26.2
+pluggy==1.6.0
+Pygments==2.20.0
+pytest==9.0.3
+pytest-html==4.2.0
+pytest-metadata==3.1.1
+pytest-xdist==3.8.0
+python-dotenv==1.2.2
+requests==2.34.2
+urllib3==2.7.0
