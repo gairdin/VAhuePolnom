@@ -90,6 +90,13 @@ def test_delete_movie_as_regular_user_forbidden(api_manager, registered_user, ex
     assert response.status_code == 403, \
         f"Ожидался статус 403 (Forbidden), но получен {response.status_code}"
 
+def test_delete_non_existing_movie(api_manager, admin_creds):
+    api_manager.auth.authenticate(admin_creds)
+    movie_id = 999999999999999999999999999
+    response = api_manager.movies.delete_movie(movie_id, expected_status=None)
+    assert response.status_code == 404, \
+        f"фильма нема такого, {response.status_code}"
+
 
 def test_create_movie_duplicate_name_conflict(api_manager, admin_creds, created_movie_with_cleanup):
     """Нельзя создать фильм с уже существующим названием — 409 Conflict."""
