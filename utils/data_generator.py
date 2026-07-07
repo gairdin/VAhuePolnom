@@ -13,13 +13,16 @@ def generate_user_data():
     }
 
 
+VALID_GENRE_IDS = [4, 7, 8, 9, 10]
+
+
 def generate_movie_data():
     unique_suffix = int(time.time())
     return {
         "name": f"Inception_{unique_suffix}",
-        "price": round(random.uniform(290, 990), 2),
+        "price": random.randint(290, 990),
         "description": "A thief who steals corporate secrets through the use of dream-sharing technology.",
         "location": random.choice(["MSK", "SPB"]),
         "published": True,
-        "genreId": random.randint(1, 5)
+        "genreId": random.choice(VALID_GENRE_IDS)
     }

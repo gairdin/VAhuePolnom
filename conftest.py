@@ -35,6 +35,14 @@ def registered_user(api_manager, test_user_data):
     }
 
 
+@pytest.fixture(scope="session")
+def admin_creds():
+    return {
+        "email": "api1@gmail.com",
+        "password": "asdqwe123Q"
+    }
+
+
 @pytest.fixture
 def movie_data():
     return generate_movie_data()
@@ -53,3 +61,17 @@ def existing_movies(api_manager):
 def existing_movie(existing_movies):
     """Фикстура — один существующий фильм."""
     return existing_movies[0]
+
+
+@pytest.fixture
+def created_movie_with_cleanup(api_manager, movie_data, admin_creds):
+    """Фикстура создания фильма под SUPER_ADMIN с последующим удалением."""
+    api_manager.auth.authenticate(admin_creds)
+
+    response = api_manager.movies.create_movie(movie_data, expected_status=201)
+    movie_body = response.json()
+
+    yield movie_body
+
+    movie_id = movie_body["id"]
+    api_manager.movies.delete_movie(movie_id, expected_status=200)
