@@ -17,7 +17,7 @@ class AuthAPI(CustomRequester):
             expected_status=expected_status,
         )
 
-    def login(self, creds: dict, expected_status: int = 200):
+    def login(self, creds: dict, expected_status: int = 201):
         """Авторизация (получение токена)."""
         return self.send_request(
             method="POST",
@@ -32,9 +32,9 @@ class AuthAPI(CustomRequester):
         """
         response_data = self.login(creds).json()
 
-        if "token" not in response_data:
-            raise KeyError(f"Ключ 'token' не найден в ответе авторизации: {response_data}")
+        if "accessToken" not in response_data:
+            raise KeyError(f"Ключ 'accessToken' не найден в ответе авторизации: {response_data}")
 
-        token = response_data["token"]
+        token = response_data["accessToken"]
         self._update_session_headers(Authorization=f"Bearer {token}")
         return token

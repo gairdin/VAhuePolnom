@@ -1,25 +1,79 @@
-def test_create_and_get_movie(api_manager, movie_data, auth_creds):
-    """Тест создания и последующего чтения фильма через API-клиент."""
-    # 1. Авторизуемся (проставляется Bearer в сессию)
-    api_manager.auth.authenticate(auth_creds)
-
-    # 2. Создаем фильм
-    create_res = api_manager.movies.create_movie(movie_data, expected_status=201).json()
-    movie_id = create_res["id"]
-
-    # 3. Получаем фильм по ID и проверяем данные
-    get_res = api_manager.movies.get_movie(movie_id, expected_status=200).json()
-    assert get_res["title"] == movie_data["title"]
-    assert get_res["director"] == movie_data["director"]
+import pytest
+from utils.data_generator import generate_movie_data
 
 
-def test_delete_movie_via_fixture(api_manager, created_movie_with_cleanup):
-    """Тест демонстрирует использование yield-фикстуры для проверки удаления."""
-    movie = created_movie_with_cleanup
-    movie_id = movie["id"]
+# =====================================================================
+# ПОЗИТИВНЫЕ ТЕСТЫ (public GET endpoints)
+# =====================================================================
 
-    # Вызываем ручку удаления (токен уже проставлен внутри фикстуры при вызове authenticate)
-    api_manager.movies.delete_movie(movie_id, expected_status=200)
+def test_get_existing_movie_by_id(api_manager, existing_movie):
+    """Проверка получения фильма по ID — существующий в БД фильм (pre-seeded)."""
+    movie_id = existing_movie["id"]
+    response = api_manager.movies.get_movie_by_id(movie_id, expected_status=200)
+    movie = response.json()
 
-    # Проверяем, что сущность пропала (ожидаем 404 Not Found)
-    api_manager.movies.get_movie(movie_id, expected_status=404)
+    assert movie["id"] == movie_id
+    assert movie["name"] == existing_movie["name"]
+    assert movie["price"] == existing_movie["price"]
+    assert movie["location"] == existing_movie["location"]
+
+
+def test_get_movies_with_filters(api_manager, existing_movie):
+    """Проверка фильтрации списка фильмов по локации (pre-seeded данные)."""
+    target_location = existing_movie["location"]
+
+    params = {"locations": [target_location]}
+    response = api_manager.movies.get_movies_list(params=params, expected_status=200)
+    data = response.json()
+
+    assert len(data["movies"]) > 0, f"Нет фильмов с локацией {target_location}"
+    for movie in data["movies"]:
+        assert movie["location"] == target_location, \
+            f"Фильм {movie['id']} не соответствует фильтру локации"
+
+
+# =====================================================================
+# НЕГАТИВНЫЕ ТЕСТЫ — права доступа (USER не имеет прав SUPER_ADMIN)
+# =====================================================================
+
+def test_create_movie_as_regular_user_forbidden(api_manager, registered_user, movie_data):
+    """Обычный пользователь (USER) не может создавать фильмы — 403 Forbidden."""
+    api_manager.auth.authenticate(registered_user)
+
+    response = api_manager.movies.create_movie(movie_data, expected_status=None)
+
+    assert response.status_code == 403, \
+        f"Ожидался статус 403 (Forbidden), но получен {response.status_code}"
+
+
+def test_patch_movie_as_regular_user_forbidden(api_manager, registered_user, existing_movie):
+    """Обычный пользователь (USER) не может редактировать фильмы — 403 Forbidden."""
+    api_manager.auth.authenticate(registered_user)
+    movie_id = existing_movie["id"]
+
+    update_data = {"price": 9999}
+    response = api_manager.movies.patch_movie(movie_id, data=update_data, expected_status=None)
+
+    assert response.status_code == 403, \
+        f"Ожидался статус 403 (Forbidden), но получен {response.status_code}"
+
+
+def test_create_movie_duplicate_name_forbidden(api_manager, registered_user, existing_movie, movie_data):
+    """Нельзя создать фильм как USER — даже с дублирующимся именем, так как нет прав SUPER_ADMIN."""
+    api_manager.auth.authenticate(registered_user)
+
+    response = api_manager.movies.create_movie(movie_data, expected_status=None)
+
+    assert response.status_code == 403, \
+        f"Ожидался статус 403 (Forbidden), но получен {response.status_code}"
+
+
+def test_create_movie_missing_required_fields_forbidden(api_manager, registered_user):
+    """Отправка пустого тела запроса как USER возвращает 403 (нет прав SUPER_ADMIN)."""
+    api_manager.auth.authenticate(registered_user)
+
+    invalid_data = {}
+    response = api_manager.movies.create_movie(invalid_data, expected_status=None)
+
+    assert response.status_code == 403, \
+        f"Ожидался статус 403 (Forbidden), но получен {response.status_code}"

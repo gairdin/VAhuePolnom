@@ -25,10 +25,7 @@ class CustomRequester:
         self.headers.update(kwargs)
         self.session.headers.update(kwargs)
 
-    def send_request(self, method: str, endpoint: str, expected_status: int = 200, **kwargs):
-        """
-        Универсальный метод отправки запросов с автоматической валидацией статус-кода.
-        """
+    def send_request(self, method: str, endpoint: str, expected_status: int | None = 200, **kwargs):
         url = f"{self.base_url}{endpoint}"
 
         response = self.session.request(
@@ -38,7 +35,7 @@ class CustomRequester:
             **kwargs
         )
 
-        if response.status_code != expected_status:
+        if expected_status is not None and response.status_code != expected_status:
             raise AssertionError(
                 f"{method.upper()} {url} -> Получен статус {response.status_code}, ожидался {expected_status}\n"
                 f"Тело ответа: {response.text}"
