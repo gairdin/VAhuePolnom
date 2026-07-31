@@ -3,7 +3,20 @@ import requests
 from clients.api_manager import ApiManager
 from enums.hosts import Hosts
 from utils.data_generator import generate_user_data, generate_movie_data
+from entities.user import User
+from constants.roles import Roles
+from resources.user_creds import SuperAdminCreds
+from clients.db_client import DbClient
+from dotenv import load_dotenv
 
+load_dotenv()
+
+
+@pytest.fixture(scope="session")
+def db_client():
+    client = DbClient()
+    yield client
+    client.close()
 
 @pytest.fixture(scope="session")
 def session():
@@ -75,3 +88,63 @@ def created_movie_with_cleanup(api_manager, movie_data, admin_creds):
 
     movie_id = movie_body["id"]
     api_manager.movies.delete_movie(movie_id, expected_status=200)
+
+
+@pytest.fixture
+def user_session():
+    user_pool = []
+
+    def _create_user_session():
+        session = requests.Session()
+        user_session = ApiManager(session=session, auth_url=Hosts.AUTH.value, movies_url=Hosts.MOVIES.value)
+        user_pool.append(user_session)
+        return user_session
+
+    yield _create_user_session
+
+    for user in user_pool:
+        user.close_session()
+
+
+@pytest.fixture
+def test_user():
+    data = generate_user_data()
+    data["roles"] = [Roles.USER.value]
+    return data
+
+
+@pytest.fixture
+def creation_user_data(test_user):
+    updated_data = test_user.copy()
+    updated_data.update({
+        "verified": True,
+        "banned": False
+    })
+    return updated_data
+
+
+@pytest.fixture
+def super_admin(user_session):
+    new_session = user_session()
+    super_admin = User(
+        SuperAdminCreds.USERNAME,
+        SuperAdminCreds.PASSWORD,
+        [Roles.SUPER_ADMIN.value],
+        new_session
+    )
+    super_admin.api.auth.authenticate(super_admin.creds)
+    return super_admin
+
+
+@pytest.fixture
+def common_user(user_session, super_admin, creation_user_data):
+    new_session = user_session()
+    common_user = User(
+        creation_user_data["email"],
+        creation_user_data["password"],
+        [Roles.USER.value],
+        new_session
+    )
+    super_admin.api.user_api.create_user(creation_user_data)
+    common_user.api.auth.authenticate(common_user.creds)
+    return common_user
