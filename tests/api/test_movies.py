@@ -48,7 +48,7 @@ def test_create_and_get_movie(api_manager, admin_creds, movie_data):
 def test_get_movies_with_filters(api_manager, admin_creds, created_movie_with_cleanup):
     """Проверка фильтрации списка фильмов по локации."""
     api_manager.auth.authenticate(admin_creds)
-    target_location = created_movie_with_cleanup["location"]
+    target_location = created_movie_with_cleanup.location
 
     with allure.step(f"Запросить фильмы с локацией {target_location}"):
         params = {"locations": [target_location]}
@@ -72,7 +72,7 @@ def test_get_movies_with_filters(api_manager, admin_creds, created_movie_with_cl
 def test_patch_movie_success(api_manager, admin_creds, created_movie_with_cleanup):
     """Редактирование (PATCH) фильма под SUPER_ADMIN."""
     api_manager.auth.authenticate(admin_creds)
-    movie_id = created_movie_with_cleanup["id"]
+    movie_id = created_movie_with_cleanup.id
 
     with allure.step(f"Обновить цену фильма {movie_id}"):
         update_data = {"price": 9999}
@@ -157,8 +157,8 @@ def test_create_movie_and_verify_in_db(api_manager, admin_creds, movie_data, db_
 @allure.severity(allure.severity_level.NORMAL)
 def test_movie_genre_exists_in_db(api_manager, db_client, existing_movie):
     """Проверка, что genre_id фильма существует в таблице genres."""
-    movie_id = existing_movie["id"]
-    movie_genre_id = existing_movie.get("genreId")
+    movie_id = existing_movie.id
+    movie_genre_id = existing_movie.genreId
 
     with allure.step(f"Проверить genre_id={movie_genre_id} в таблице genres"):
         genre = db_client.get_genre_by_id(movie_genre_id)
@@ -220,7 +220,7 @@ def test_create_movie_as_regular_user_forbidden(api_manager, registered_user, mo
 def test_patch_movie_as_regular_user_forbidden(api_manager, registered_user, existing_movie):
     """Обычный пользователь (USER) не может редактировать фильмы — 403 Forbidden."""
     api_manager.auth.authenticate(registered_user)
-    movie_id = existing_movie["id"]
+    movie_id = existing_movie.id
 
     with allure.step("Попробовать изменить фильм под USER"):
         update_data = {"price": 9999}
@@ -240,7 +240,7 @@ def test_patch_movie_as_regular_user_forbidden(api_manager, registered_user, exi
 def test_delete_movie_as_regular_user_forbidden(api_manager, registered_user, existing_movie):
     """Обычный пользователь (USER) не может удалять фильмы — 403 Forbidden."""
     api_manager.auth.authenticate(registered_user)
-    movie_id = existing_movie["id"]
+    movie_id = existing_movie.id
 
     with allure.step("Попробовать удалить фильм под USER"):
         response = api_manager.movies.delete_movie(movie_id, expected_status=None)
@@ -277,7 +277,7 @@ def test_create_movie_duplicate_name_conflict(api_manager, admin_creds, created_
 
     with allure.step("Создать фильм с существующим названием"):
         duplicate_movie_data = {
-            "name": created_movie_with_cleanup["name"],
+            "name": created_movie_with_cleanup.name,
             "price": 500,
             "description": "Duplicate",
             "location": "MSK",

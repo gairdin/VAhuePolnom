@@ -3,6 +3,7 @@ import requests
 from clients.api_manager import ApiManager
 from enums.hosts import Hosts
 from utils.data_generator import generate_user_data, generate_movie_data
+from entities.movie import Movie
 from entities.user import User
 from constants.roles import Roles
 from resources.user_creds import SuperAdminCreds
@@ -63,11 +64,11 @@ def movie_data():
 
 @pytest.fixture(scope="session")
 def existing_movies(api_manager):
-    """Фикстура — список уже существующих в БД фильмов (pre-seeded)."""
+    """Фикстура — список уже существующих в БД фильмов (pre-seeded), валидированный через Movie."""
     response = api_manager.movies.get_movies_list(expected_status=200)
     data = response.json()
     assert len(data["movies"]) > 0, "Нет предзагруженных фильмов для тестов"
-    return data["movies"]
+    return [Movie(**movie) for movie in data["movies"]]
 
 
 @pytest.fixture
@@ -82,11 +83,11 @@ def created_movie_with_cleanup(api_manager, movie_data, admin_creds):
     api_manager.auth.authenticate(admin_creds)
 
     response = api_manager.movies.create_movie(movie_data, expected_status=201)
-    movie_body = response.json()
+    movie_body = Movie(**response.json())
 
     yield movie_body
 
-    movie_id = movie_body["id"]
+    movie_id = movie_body.id
     api_manager.movies.delete_movie(movie_id, expected_status=200)
 
 
