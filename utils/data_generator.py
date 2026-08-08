@@ -14,8 +14,8 @@ import time
 import random
 
 # ID жанров, существующих в БД (подсмотрены через GET /movies).
-# Значения вне этого списка (1-3, 5-6) вернут 400 Bad Request.
-VALID_GENRE_IDS = [4, 7, 8, 9, 10]
+# Значения вне этого списка вернут 400 Bad Request.
+VALID_GENRE_IDS = [1, 7, 8, 9, 10]
 
 
 def generate_user_data() -> dict:
@@ -26,10 +26,10 @@ def generate_user_data() -> dict:
     Email гарантированно уникален — содержит timestamp + random.
     Пароль фиксированный: SecurePassword123.
     """
-    unique_suffix = f"{int(time.time())}_{random.randint(1000, 9999)}"
+    unique_suffix = f"{int(time.time())}{random.randint(1000, 9999)}"
     password = "SecurePassword123"
     return {
-        "email": f"user_{unique_suffix}@cinescope.ru",
+        "email": f"user{unique_suffix}@cinescope.ru",
         "fullName": "Иванов Иван Иванович",
         "password": password,
         "passwordRepeat": password,

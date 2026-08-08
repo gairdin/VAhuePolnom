@@ -39,11 +39,11 @@ class AuthAPI(CustomRequester):
     # Логин
     # ------------------------------------------------------------------
 
-    def login(self, creds: dict, expected_status: int = 201):
+    def login(self, creds: dict, expected_status: int = 200):
         """
         POST /login — получить accessToken + refreshToken.
 
-        Ожидаемый статус: 201 (успех) или 401 (неверный логин/пароль).
+        Ожидаемый статус: 200 (успех) или 401 (неверный логин/пароль).
         """
         return self.send_request(
             method="POST",

@@ -19,6 +19,11 @@ def db_client():
     yield client
     client.close()
 
+
+@pytest.fixture
+def db_conn(db_client):
+    return db_client.conn
+
 @pytest.fixture(scope="session")
 def session():
     s = requests.Session()
