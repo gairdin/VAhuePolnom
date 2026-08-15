@@ -9,8 +9,14 @@ from constants.roles import Roles
 from resources.user_creds import SuperAdminCreds
 from clients.db_client import DbClient
 from dotenv import load_dotenv
+from playwright.sync_api import Page
+from pages.register_page import CinescopeRegisterPage
+from pages.login_page import CinescopeLoginPage
+from pages.movie_page import CinescopeMoviePage
 
 load_dotenv()
+
+DEFAULT_UI_TIMEOUT = 30000
 
 
 @pytest.fixture(scope="session")
@@ -154,3 +160,55 @@ def common_user(user_session, super_admin, creation_user_data):
     super_admin.api.user_api.create_user(creation_user_data)
     common_user.api.auth.authenticate(common_user.creds)
     return common_user
+
+
+# =====================================================================
+# UI / PLAYWRIGHT FIXTURES
+# =====================================================================
+
+@pytest.fixture(scope="session")
+def browser(playwright):
+    """Браузер запускается один раз на всю сессию."""
+    browser = playwright.chromium.launch(headless=True)
+    yield browser
+    browser.close()
+
+
+@pytest.fixture(scope="function")
+def context(browser):
+    """Изолированный контекст с трассировкой и таймаутом для каждого теста."""
+    context = browser.new_context()
+    context.tracing.start(screenshots=True, snapshots=True, sources=True)
+    context.set_default_timeout(DEFAULT_UI_TIMEOUT)
+    yield context
+    context.close()
+
+
+@pytest.fixture(scope="function")
+def page(context):
+    """Свежая вкладка для каждого теста."""
+    page = context.new_page()
+    yield page
+    page.close()
+
+
+@pytest.fixture
+def register_page(page: Page) -> CinescopeRegisterPage:
+    """Открытая страница регистрации."""
+    register_page = CinescopeRegisterPage(page)
+    register_page.open()
+    return register_page
+
+
+@pytest.fixture
+def login_page(page: Page) -> CinescopeLoginPage:
+    """Открытая страница логина."""
+    login_page = CinescopeLoginPage(page)
+    login_page.open()
+    return login_page
+
+
+@pytest.fixture
+def movie_page(page: Page) -> CinescopeMoviePage:
+    """Страница фильма (без автооткрытия — фильм открывается в тесте)."""
+    return CinescopeMoviePage(page)
