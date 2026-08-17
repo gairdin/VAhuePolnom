@@ -11,11 +11,6 @@ class CinescopeMoviePage(BasePage):
     def open_movie(self, movie_id: int):
         self.open_url(f"{self.home_url}movies/{movie_id}")
 
-    def open_first_movie(self):
-        """Открыть первую доступную страницу фильма через 'Все фильмы'."""
-        self.open_all_movies()
-        self.page.locator('[data-qa-id="more_button"]').first.click()
-
     def leave_review(self, text: str, rating: str):
         self.enter_text(self.review_input, text)
         self.select_rating(rating)

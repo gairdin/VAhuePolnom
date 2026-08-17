@@ -46,3 +46,11 @@ class DbClient:
     def movie_exists_by_name(self, name: str) -> bool:
         row = self.fetch_one("SELECT 1 FROM movies WHERE name = %s", (name,))
         return row is not None
+
+    def verify_user(self, email: str) -> None:
+        with self.conn.cursor() as cur:
+            cur.execute(
+                "UPDATE users SET verified = TRUE WHERE email = %s",
+                (email,),
+            )
+        self.conn.commit()
